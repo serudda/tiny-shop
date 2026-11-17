@@ -37,6 +37,8 @@ const money = (n) => `$${Number(n).toFixed(2)}`;
 
 // ----- product list -----
 
+const isOnSale = (p) => Number(p.compareAtPrice) > p.price;
+
 function renderProducts() {
   $('products').innerHTML = CATALOG.map((p) => `
     <article class="card" data-testid="product-${p.id}">
@@ -44,14 +46,25 @@ function renderProducts() {
       <h3>${p.name}</h3>
       <div class="price">
         <span>${money(p.price)}</span>
-        ${p.onSale ? '<span class="tag">Sale</span>' : ''}
+        ${isOnSale(p) ? `<s class="was">${money(p.compareAtPrice)}</s><span class="tag">Sale</span>` : ''}
       </div>
       <button type="button" data-add="${p.id}">Add to cart</button>
     </article>`).join('');
 }
 
+function renderSavings() {
+  const saved = state.cart.reduce((sum, { id, qty }) => {
+    const p = CATALOG.find((x) => x.id === id);
+    return p && isOnSale(p) ? sum + (p.compareAtPrice - p.price) * qty : sum;
+  }, 0);
+  const banner = $('savings');
+  banner.hidden = saved <= 0 || Boolean(state.order);
+  banner.textContent = `You're saving ${money(saved)} with sale prices`;
+}
+
 function render() {
   renderCart();
+  renderSavings();
 }
 
 // ----- cart -----
